@@ -1,0 +1,72 @@
+class LRUCache {
+    private static class Node {
+        int key;
+        int value;
+        Node prev;
+        Node next;
+        
+        Node(int key, int value) {
+            this.key = key;
+            this.value = value;
+        }
+    }
+
+    private final int capacity;
+    private final Map<Integer, Node> map;
+    private final Node head;
+    private final Node tail;
+    public LRUCache(int capacity) {
+        this.capacity = capacity;
+        this.map = new HashMap<>();
+        
+        // Pseudo/Dummy head and tail to avoid null-checks during node wiring
+        this.head = new Node(0, 0);
+        this.tail = new Node(0, 0);
+        head.next = tail;
+        tail.prev = head;
+    }
+    
+    public int get(int key) {
+        if (!map.containsKey(key)) {
+            return -1;
+        }
+        Node node = map.get(key);
+        moveToHead(node);
+        return node.value;
+    }
+    
+    public void put(int key, int value) {
+        if (map.containsKey(key)) {
+            Node node = map.get(key);
+            node.value = value; // Update value
+            moveToHead(node);
+        } else {
+            // Evict if cache is at capacity
+            if (map.size() >= capacity) {
+                Node lru = tail.prev;
+                removeNode(lru);
+                map.remove(lru.key);
+            }
+            // Insert the new node
+            Node newNode = new Node(key, value);
+            addNode(newNode);
+            map.put(key, newNode);
+        }
+    }
+    private void removeNode(Node node) {
+        node.prev.next = node.next;
+        node.next.prev = node.prev;
+    }
+
+    // Helper: Add a new node right after the dummy head (Most Recently Used position)
+    private void addNode(Node node) {
+        node.next = head.next;
+        node.next.prev = node;
+        head.next = node;
+        node.prev = head;
+    }
+    private void moveToHead(Node node) {
+        removeNode(node);
+        addNode(node);
+    }
+}
